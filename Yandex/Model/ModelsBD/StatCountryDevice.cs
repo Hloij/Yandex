@@ -26,13 +26,13 @@ namespace Yandex.Model.ModelsBD
         public DateTime Date { get; set; }
         public static StatCountryDevice operator +(StatCountryDevice item, YandexStat value)
         {
-            using var _ = WorkWithBD<StatCountryDevice>.Read(new StatCountryDevice());
+            
             Type type = item.GetType();
             long id = 1;
             PropertyInfo[] properties = type.GetProperties();
             try
             {
-                 id = _.Result.Max(p => p.Id) + 1;
+                 id = StatisticYandexCountry.StatCountryDeviceLastStatic.Max(p => p.Id) + 1;
             }
             catch
             {

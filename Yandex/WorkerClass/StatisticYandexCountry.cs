@@ -32,6 +32,7 @@ namespace Yandex.WorkerClass
         public List<YandexStat?> StatDeviseNow => _statDeviceNow;
         List<YandexStat?> _statCountryDeviceLast = new();
         public List<YandexStat?> StatCountryDeviceLast => _statCountryDeviceLast;
+        public static List<StatCountryDevice> StatCountryDeviceLastStatic { get; set; }
         YandexApiCountry.YandexCountry _apiContryYandex = new();
         YandexApiDevice.YandexDevice _apiDeviceYandex = new();
         List<AdpProfexApiCountry.ApiCountry> _apiCountryAdprofex = new();
@@ -90,6 +91,7 @@ namespace Yandex.WorkerClass
         {
             List<StatCountryDevice> LastStat1 = await WorkWithBD<StatCountryDevice>.Read(new StatCountryDevice());
             List<YandexStat> LastStat = new List<YandexStat>();
+            List<StatCountryDevice> LastStat2 = new List<StatCountryDevice>();
 
 
             foreach (var item in LastStat1)
@@ -118,12 +120,14 @@ namespace Yandex.WorkerClass
                 {
                     YandexStat value = new();
                     value += item;
+                    LastStat2.Add(item);
                     LastStat.Add(value); was = true;
                 }
                 if (was == false)
                 {
                     YandexStat value = new();
                     value += item;
+                    LastStat2.Add(item);
                     LastStat.Add(value);
 
                 }
@@ -132,6 +136,7 @@ namespace Yandex.WorkerClass
 
 
             _statCountryDeviceLast = LastStat;
+            StatCountryDeviceLastStatic= LastStat2;
         }
         async Task GetStatAdprofexNow()
         {
