@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Forms\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="IsoNames" Version="1.1.0" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.3" />
     <PackageReference Include="Nager.Country.Translation" Version="4.4.0" />

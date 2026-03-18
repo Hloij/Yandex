@@ -39,11 +39,11 @@ namespace Yandex.WorkerClass
         List<AdpProfexApiDevice.ApiDevice> _apiDeviceAdprofex = new();
         bool _zero;
         string _name;
-        UserOptions _userOptions;
-        AdvertisingStreams _advertisingStreams;
-        List<AdvertisingCompany> _advertisingCompany;
-        DeviceOptions _deviceOptions;
-        CountryOprions _countryOptions;
+        internal static UserOptions _userOptions { get; set; }
+        internal static AdvertisingStreams _advertisingStreams;
+        internal static List<AdvertisingCompany> _advertisingCompany;
+        internal static DeviceOptions _deviceOptions;
+        internal static CountryOprions _countryOptions;
         (string, ApiInfoCompainCPC) Micros1;
         (string, string) Filter { get; set; }
         public List<string> Up { get; set; } = new();
@@ -60,7 +60,7 @@ namespace Yandex.WorkerClass
             _advertisingStreams = advertisingStreams.Where(p => p.Name == _name).FirstOrDefault();
             List<AdvertisingCompany> advertisingCompanies = await WorkWithBD<AdvertisingCompany>.Read(new AdvertisingCompany());
             _advertisingCompany = advertisingCompanies;
-            List<UserOptions> user = await WorkWithBD<UserOptions>.Read(new UserOptions());
+            List<UserOptions> user = WorkWithBD<UserOptions>.Read(new UserOptions()).Result;
             _userOptions = user[0];
             List<DeviceOptions> device = await WorkWithBD<DeviceOptions>.Read(new DeviceOptions());
             _deviceOptions = device.Where(p => p.Id == _advertisingStreams.DeviceOptionsId).FirstOrDefault();
@@ -76,7 +76,7 @@ namespace Yandex.WorkerClass
                 ("lang", "ru"), ("stat_type", "main") , ("period", "today") ,
                 ("dimension_field", "geo|country") ,("field", "partner_wo_nds"),("field", "cpmv_partner_wo_nds"),("field", "impressions"),
                 ("order_by", "[{\"field\":\"geo\",\"dir\":\"asc\"},{\"field\":\"partner_wo_nds\",\"dir\":\"asc\"}]"),("entity_field", "domain")
-            }, _userOptions.TokenYandex
+            },_userOptions.TokenYandex
             );
             _apiDeviceYandex = await Api<YandexApiDevice.YandexDevice>.PostApiRespons("https://partner.yandex.ru/api/statistics2/get", Params: new (string, string)[9]
             {
@@ -87,11 +87,11 @@ namespace Yandex.WorkerClass
             );
 
         }
-        async Task GetStatLastAsync()
+        async Task<bool> GetStatLastAsync()
         {
             List<StatCountryDevice> LastStat1 = await WorkWithBD<StatCountryDevice>.Read(new StatCountryDevice());
             List<YandexStat> LastStat = new List<YandexStat>();
-            List<StatCountryDevice> LastStat2 = new List<StatCountryDevice>();
+            List<StatCountryDevice> LastStat2 = LastStat1;
 
 
             foreach (var item in LastStat1)
@@ -120,14 +120,14 @@ namespace Yandex.WorkerClass
                 {
                     YandexStat value = new();
                     value += item;
-                    LastStat2.Add(item);
+
                     LastStat.Add(value); was = true;
                 }
                 if (was == false)
                 {
                     YandexStat value = new();
                     value += item;
-                    LastStat2.Add(item);
+
                     LastStat.Add(value);
 
                 }
@@ -136,7 +136,8 @@ namespace Yandex.WorkerClass
 
 
             _statCountryDeviceLast = LastStat;
-            StatCountryDeviceLastStatic= LastStat2;
+            StatCountryDeviceLastStatic = LastStat2;
+            return true;
         }
         async Task GetStatAdprofexNow()
         {
@@ -183,32 +184,39 @@ namespace Yandex.WorkerClass
                     bool was = true;
                     for (int i = 0; i < _apiCountryAdprofex[h].data.Count - 1; i++)
                     {
-                        string country = Translate(_apiCountryAdprofex[h].data[i].country);
-                        if (_apiContryYandex.data.points[j].dimensions.geo == country)
+                        try
                         {
-                            if (_statCountryNow.FirstOrDefault(p => p.Name == country) == null)
+                            string country = Translate(_apiCountryAdprofex[h].data[i].country);
+                            _apiContryYandex.data.points[j].dimensions.geo = _apiContryYandex.data.points[j].dimensions.geo.Replace("ё", "е");
+                            if (country == "Чешская республика") country = "Чехия";
+                            if (_apiContryYandex.data.points[j].dimensions.geo == "Киргизия") _apiContryYandex.data.points[j].dimensions.geo = "Кыргызстан";
+                            if (_apiContryYandex.data.points[j].dimensions.geo == country)
                             {
-                                YandexStat statCountryDevice = new();
-                                statCountryDevice.Domen = _apiContryYandex.data.points[j].dimensions.domain;
-                                statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
-                                statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
-                                statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
-                                statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
-                                statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].buy_count);
-                                statCountryDevice.CPC = Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp);
-                                statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
-                                statCountryDevice.Date = DateTime.Now;
-                                statCountryDevice.Rr = _apiContryYandex.data.points[j].measures[0].partner_wo_nds / _apiCountryAdprofex[h].data[i].dsp_flow;
-                                statCountryDevice.Rashod = _apiCountryAdprofex[h].data[i].dsp_flow;
-                                statCountryDevice.DohodClear = _apiContryYandex.data.points[j].measures[0].partner_wo_nds - _apiCountryAdprofex[h].data[i].dsp_flow;
-                                string id = statCountryDevice.Name;
-                                ChangeCountry(ref id);
-                                statCountryDevice.Kof = Micros1.Item2.campaign_micro_bidding._3.Where(p => p.id == id).First().coeff;
-                                _statCountryNow.Add(statCountryDevice);
-                                was = false;
-                                break;
+                                if (_statCountryNow.FirstOrDefault(p => p.Name == country) == null)
+                                {
+                                    YandexStat statCountryDevice = new();
+                                    statCountryDevice.Domen = _apiContryYandex.data.points[j].dimensions.domain;
+                                    statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
+                                    statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
+                                    statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
+                                    statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
+                                    statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].buy_count);
+                                    statCountryDevice.CPC = Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp);
+                                    statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
+                                    statCountryDevice.Date = DateTime.Now;
+                                    statCountryDevice.Rr = _apiContryYandex.data.points[j].measures[0].partner_wo_nds / _apiCountryAdprofex[h].data[i].dsp_flow;
+                                    statCountryDevice.Rashod = _apiCountryAdprofex[h].data[i].dsp_flow;
+                                    statCountryDevice.DohodClear = _apiContryYandex.data.points[j].measures[0].partner_wo_nds - _apiCountryAdprofex[h].data[i].dsp_flow;
+                                    string id = ChangeCountry(statCountryDevice.Name);
+
+                                    statCountryDevice.Kof = Micros1.Item2.campaign_micro_bidding._3.Where(p => p.id == id).First().coeff;
+                                    _statCountryNow.Add(statCountryDevice);
+                                    was = false;
+                                    break;
+                                }
                             }
                         }
+                        catch { continue; }
                     }
                     if (was)
                     {
@@ -227,8 +235,8 @@ namespace Yandex.WorkerClass
                             statCountryDevice.Rr = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
                             statCountryDevice.Rashod = 0;
                             statCountryDevice.DohodClear = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
-                            string id = statCountryDevice.Name;
-                            ChangeCountry(ref id);
+                            string id = ChangeCountry(statCountryDevice.Name);
+
                             try
                             {
                                 statCountryDevice.Kof = Micros1.Item2.campaign_micro_bidding._3.Where(p => p.id == id).First().coeff;
@@ -236,7 +244,9 @@ namespace Yandex.WorkerClass
                             }
                             catch
                             {
-                                continue;
+                                statCountryDevice.Kof = 0;
+                                _statCountryNow.Add(statCountryDevice);
+
                             }
                         }
                     }
@@ -396,8 +406,6 @@ namespace Yandex.WorkerClass
                             statCountryDevice.Rr = _apiDeviceYandex.data.points[j].measures[0].partner_wo_nds;
                             statCountryDevice.Rashod = 0;
                             statCountryDevice.DohodClear = _apiDeviceYandex.data.points[j].measures[0].partner_wo_nds;
-                            string id = statCountryDevice.Name;
-                            ChangeCountry(ref id);
                             try
                             {
                                 if (statCountryDevice.Name == "Мобильный телефон")
@@ -451,12 +459,12 @@ namespace Yandex.WorkerClass
                             {
                                 if (this._statCountryNow[i].Kof > _countryOptions.Min) //проверяем коэф если больше минимального для нулей проходим дальше
                                 {
-                                    if (vs.Prosmotr <= this._countryOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
+                                    if (vs.Prosmotr <= _countryOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
                                     {
                                         if ((this._statCountryNow[i].Kof + _countryOptions.KoefUp) < _countryOptions.Max)// если коэф + коэф увеличения меньше максимального для нулей проходим дальше
                                         {
                                             this.Null.Add(vs.Name);//добавляем в нули 
-                                            this._statCountryNow[i].Kof += this._countryOptions.KoefUp;
+                                            this._statCountryNow[i].Kof += _countryOptions.KoefUp;
                                         }
                                     }
                                 }
@@ -498,12 +506,12 @@ namespace Yandex.WorkerClass
                             {
                                 if (this._statDeviceNow[i].Kof > _deviceOptions.Min) //проверяем коэф если больше минимального для нулей проходим дальше
                                 {
-                                    if (vs.Prosmotr <= this._deviceOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
+                                    if (vs.Prosmotr <= _deviceOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
                                     {
                                         if ((this._statDeviceNow[i].Kof + _deviceOptions.KoefUp) < _deviceOptions.Max)// если коэф + коэф увеличения меньше максимального для нулей проходим дальше
                                         {
                                             this.Null.Add(vs.Name);//добавляем в нули 
-                                            this._statDeviceNow[i].Kof += this._deviceOptions.KoefUp;
+                                            this._statDeviceNow[i].Kof += _deviceOptions.KoefUp;
                                         }
                                     }
                                 }
@@ -594,7 +602,11 @@ namespace Yandex.WorkerClass
             await GetStatNowAsync();
             await GetStatAdprofexNow();
             await GetInfo();
-            GetStatLastAsync();
+            bool can = await GetStatLastAsync();
+            while (can != true)
+            {
+                await Task.Delay(1000);
+            }
             await Sravnenie();
             await ChangeKoefAsync();
         }
@@ -604,10 +616,12 @@ namespace Yandex.WorkerClass
             {
 
                 await WorkWithBD<StatCountryDevice>.Add(new StatCountryDevice() + _statCountryNow[i]);
+                StatCountryDeviceLastStatic.Add(new StatCountryDevice() + _statCountryNow[i]);
             }
             for (int i = 0; i < _statDeviceNow.Count; i++)
             {
                 await WorkWithBD<StatCountryDevice>.Add(new StatCountryDevice() + _statDeviceNow[i]);
+                StatCountryDeviceLastStatic.Add(new StatCountryDevice() + _statDeviceNow[i]);
             }
 
         }
@@ -616,22 +630,22 @@ namespace Yandex.WorkerClass
             List<string> _Up = new();
             for (int i = 0; i < Up.Count; i++)
             {
-                string vs = Up[i];
-                ChangeCountry(ref vs);
+                string vs = ChangeCountry(Up[i]);
+
                 _Up.Add(vs);
             }
             List<string> _Down = new();
             for (int i = 0; i < Down.Count; i++)
             {
-                string vs = Down[i];
-                ChangeCountry(ref vs);
+                string vs = ChangeCountry(Down[i]);
+
                 _Down.Add(vs);
             }
             List<string> _Nuls = new();
             for (int i = 0; i < Null.Count; i++)
             {
-                string vs = Null[i];
-                ChangeCountry(ref vs);
+                string vs = ChangeCountry(Null[i]);
+
                 _Nuls.Add(vs);
             }
             for (int i = 0; i < _Up.Count; i++)
@@ -641,7 +655,7 @@ namespace Yandex.WorkerClass
 
                     if ((this.Micros1.Item2.campaign_micro_bidding._3[j].id == Convert.ToString(_Up[i])) && (Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) > 1))
                     {
-                        this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (int)(Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) + (this._countryOptions.KoefUp));
+                        this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (int)(Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) + (_countryOptions.KoefUp));
                     }
 
                 }
@@ -653,9 +667,9 @@ namespace Yandex.WorkerClass
 
                     if (this.Micros1.Item2.campaign_micro_bidding._3[j].id == Convert.ToString(_Nuls[i]))
                     {
-                        if ((this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) >= (this._countryOptions.Min) && (this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) < (this._countryOptions.Max))
+                        if ((this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) >= (_countryOptions.Min) && (this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) < (_countryOptions.Max))
                         {
-                            this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) + (int)(this._countryOptions.KoefUp));
+                            this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) + (int)(_countryOptions.KoefUp));
                         }
                     }
 
@@ -668,9 +682,9 @@ namespace Yandex.WorkerClass
 
                     if (this.Micros1.Item2.campaign_micro_bidding._3[j].id == Convert.ToString(_Down[i]))
                     {
-                        if ((this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) - (this._countryOptions.KoefDown) > 1)
+                        if ((this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) - (_countryOptions.KoefDown) > 1)
                         {
-                            this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) - (int)(this._countryOptions.KoefDown));
+                            this.Micros1.Item2.campaign_micro_bidding._3[j].coeff = (Convert.ToInt32(this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) - (int)(_countryOptions.KoefDown));
                         }
                         else if ((this.Micros1.Item2.campaign_micro_bidding._3[j].coeff) > 1)
                         {
@@ -772,8 +786,8 @@ namespace Yandex.WorkerClass
             }
             else
             {
-                string item = changed.Name;
-                ChangeCountry(ref item);
+                string item = ChangeCountry(changed.Name);
+
                 changed.Name = item;
                 for (int i = 0; i < this.Micros1.Item2.campaign_micro_bidding._3.Count; i++)
                 {
@@ -882,134 +896,320 @@ namespace Yandex.WorkerClass
 
         }
 
-        public static void ChangeCountry(ref string item)
-        {
 
-            switch (item)
-            {//добавить все остальные страны
-                case "Кыргызстан": item = "95"; break;
-                case "Словакия": item = "194"; break;
-                case "Швейцария": item = "234"; break;
-                case "Беларусь": item = "23"; break;
-                case "Молдова": item = "134"; break;
-                case "Узбекистан": item = "215"; break;
-                case "Россия": item = "172"; break;
-                case "Казахстан": item = "87"; break;
-                case "Армения": item = "15"; break;
-                case "Польша": item = "166"; break;
-                case "Болгария": item = "27"; break;
-                case "Венгрия": item = "42"; break;
-                case "Германия": item = "57"; break;
-                case "Греция": item = "64"; break;
-                case "Испания": item = "83"; break;
-                case "Италия": item = "84"; break;
-                case "Латвия": item = "109"; break;
-                case "Португалия": item = "167"; break;
-                case "Румыния": item = "174"; break;
-                case "Украина": item = "216"; break;
-                case "Франция": item = "224"; break;
-                case "Чешская Республика": item = "232"; break;
-                case "Эстония": item = "240"; break;
-                case "Литва": item = "114"; break;
-                case "Грузия": item = "65"; break;
-                case "Азербайджан": item = "3"; break;
-                case "Филиппины": item = "221"; break;
-                case "Сербия": item = "190"; break;
-                case "Мексика": item = "131"; break;
-                case "Индонезия": item = "78"; break;
-                case "Марокко": item = "128"; break;
-                case "Перу": item = "165"; break;
-                case "Саудовская Аравия": item = "179"; break;
-                case "Сингапур": item = "191"; break;
-                case "Аргентина": item = "14"; break;
-                case "Индия": item = "248"; break;
-                case "Колумбия": item = "101"; break;
-                case "Малайзия": item = "124"; break;
-                case "Босния и Герцеговина": item = "30"; break;
-                case "Чили": item = "233"; break;
-                case "Ирак": item = "80"; break;
-                case "Вьетнам": item = "46"; break;
-                case "Израиль": item = "77"; break;
-                case "Турция": item = "213"; break;
-                case "Австрия": item = "2"; break;
-                case "США": item = "200"; break;
-                case "Таиланд": item = "203"; break;
-
-                case "Великобритания": item = "41"; break;
-                case "Канада": item = "91"; break;
-                case "Финляндия": item = "222"; break;
-                case "Швеция": item = "235"; break;
-
-                case "Абхазия": item = "247"; break;
-                case "Египет": item = "73"; break;
-                case "Туркмения": item = "212"; break;
-                case "Австралия": item = "1"; break;
-
-            }
-
-
-        }
         public static string ChangeCountry(string item)
         {
 
             switch (item)
             {
-                case "95": return "Кыргызстан";
-                case "194": return "Словакия";
-                case "234": return "Швейцария";
-                case "23": return "Беларусь";
-                case "134": return "Молдова";
-                case "215": return "Узбекистан";
-                case "172": return "Россия";
-                case "87": return "Казахстан";
-                case "15": return "Армения";
-                case "166": return "Польша";
+                case "Аргентина": return "14";
+                case "Бразилия": return "32";
+                case "Андорра": return "11";
+                case "Босния и Герцеговина": return "30";
+                case "Гонконг": return "61";
+                case "Гренландия": return "63";
+                case "Венесуэла": return "43";
+                case "Израиль": return "77";
+                case "Мексика": return "131";
+                case "Перу": return "165";
+                case "Колумбия": return "101";
+                case "Буркина-Фасо": return "36";
+                case "Египет": return "73";
+                case "Камбоджа": return "89";
+                case "Канада": return "91";
+                case "Малайзия": return "124";
+                case "Люксембург": return "116";
+                case "Марокко": return "128";
+                case "Кения": return "93";
+                case "Куба": return "105";
+                case "Ирак": return "80";
+                case "Объединенные Арабские Эмираты": return "150";
+                case "Панама": return "162";
+                case "Никарагуа": return "145";
+                case "Гондурас": return "60";
+                case "Катар": return "92";
+                case "Дания": return "67";
+                case "Мальта": return "127";
+                case "Лихтенштейн": return "115";
+                case "Монако": return "135";
+                case "Норвегия": return "149";
+                case "Исландия": return "82";
+                case "Чили": return "233";
+                case "Таджикистан": return "202";
+                case "Сербия": return "190";
+                case "Филиппины": return "221";
+                case "Таиланд": return "203";
+                case "Саудовская Аравия": return "179";
+                case "Индия": return "248";
+                case "Сингапур": return "191";
+                case "Алжир": return "6";
+                case "Эквадор": return "237";
+                case "Черногория": return "231";
+                case "Тунис": return "211";
+                case "Австрия": return "2";
+                case "Бельгия": return "24";
+                case "Болгария": return "27";
+                case "Венгрия": return "42";
+                case "Германия": return "57";
+                case "Азербайджан": return "3";
+                case "Армения": return "15";
+                case "Бангладеш": return "19";
+                case "Беларусь": return "23";
+                case "Великобритания": return "41";
+                case "Вьетнам": return "46";
+                case "Финляндия": return "222";
+                case "Ирландия": return "249";
+                case "Туркменистан": return "212";
+                case "Абхазия": return "247";
+                case "Грузия": return "65";
+                case "Индонезия": return "78";
+                case "Казахстан": return "87";
+                case "Кыргызстан": return "95";
+                case "Молдова": return "134";
+                case "Республика Корея": return "170";
+                case "США": return "200";
+                case "Турция": return "213";
+                case "Узбекистан": return "215";
+                case "Украина": return "216";
+                case "Швейцария": return "234";
+                case "Южно-Африканская Республика": return "242";
+                case "Греция": return "64";
+                case "Испания": return "83";
+                case "Сенегал": return "186";
+                case "Сомали": return "197";
+                case "Италия": return "84";
+                case "Кипр": return "94";
+                case "Латвия": return "109";
+                case "Литва": return "114";
+                case "Нидерланды": return "144";
+                case "Польша": return "166";
+                case "Португалия": return "167";
+                case "Румыния": return "174";
+                case "Словакия": return "194";
+                case "Словения": return "195";
+                case "Франция": return "224";
+                case "Хорватия": return "228";
+                case "Чехия": return "232";
+                case "Швеция": return "235";
+                case "Эстония": return "240";
+                case "Коста-Рика": return "103";
+                case "Нигерия": return "143";
+                case "Доминика": return "70";
+                case "Доминиканская Республика": return "71";
+                case "Монголия": return "136";
+                case "Япония": return "246";
+                case "Австралия": return "1";
+                case "Албания": return "5";
+                case "Ангола": return "10";
+                case "Афганистан": return "17";
+                case "Багамы": return "18";
+                case "Барбадос": return "20";
+                case "Бахрейн": return "21";
+                case "Бермуды": return "26";
+                case "Боливия": return "28";
+                case "Бутан": return "38";
+                case "Ватикан": return "40";
+                case "Виргинские острова (Великобритания)": return "34";
+                case "Виргинские острова (США)": return "7";
+                case "Внешние малые острова (США)": return "44";
+                case "Гаити": return "48";
+                case "Гана": return "51";
+                case "Гваделупа": return "52";
+                case "Иран": return "81";
+                case "Иордания": return "79";
+                case "Французская Полинезия": return "225";
+                case "Эфиопия": return "241";
+                case "Южная Осетия": return "251";
+                case "Южный Судан": return "244";
+                case "Ямайка": return "245";
+                case "Ливан": return "112";
+                case "Лаос": return "108";
+                case "Оман": return "151";
+                case "Либерия": return "111";
+                case "Нигер": return "142";
+                case "Ливия": return "113";
+                case "Маврикий": return "117";
+                case "Мавритания": return "118";
+                case "Мьянма": return "138";
+                case "Мадагаскар": return "119";
+                case "Мартиника": return "129";
+                case "Намибия": return "139";
+                case "Непал": return "141";
+                case "Пакистан": return "159";
+                case "Парагвай": return "164";
+                case "Руанда": return "173";
+                case "Тайвань (Китай)": return "97";
+                case "Танзания": return "204";
+                case "Уганда": return "214";
+                case "Фарерские острова": return "219";
+                case "Уругвай": return "218";
+                case "Фиджи": return "220";
+                case "Французские Южные и Антарктические территории": return "226";
+                case "Шри-Ланка": return "236";
+                case "Новая Зеландия": return "147";
+                case "Камерун": return "90";
+                case "Замбия": return "74";
+                case "Кот-д'Ивуар": return "104";
+                case "Гватемала": return "53";
+                case "Тринидад и Тобаго": return "209";
+                case "Сальвадор": return "175";
+                case "Китай": return "99";
+                case "Россия": return "172";
+
+                case "14": return "Аргентина";
+                case "32": return "Бразилия";
+                case "11": return "Андорра";
+                case "30": return "Босния и Герцеговина";
+                case "61": return "Гонконг";
+                case "63": return "Гренландия";
+                case "43": return "Венесуэла";
+                case "77": return "Израиль";
+                case "131": return "Мексика";
+                case "165": return "Перу";
+                case "101": return "Колумбия";
+                case "36": return "Буркина-Фасо";
+                case "73": return "Египет";
+                case "89": return "Камбоджа";
+                case "91": return "Канада";
+                case "124": return "Малайзия";
+                case "116": return "Люксембург";
+                case "128": return "Марокко";
+                case "93": return "Кения";
+                case "105": return "Куба";
+                case "80": return "Ирак";
+                case "150": return "Объединенные Арабские Эмираты";
+                case "162": return "Панама";
+                case "145": return "Никарагуа";
+                case "60": return "Гондурас";
+                case "92": return "Катар";
+                case "67": return "Дания";
+                case "127": return "Мальта";
+                case "115": return "Лихтенштейн";
+                case "135": return "Монако";
+                case "149": return "Норвегия";
+                case "82": return "Исландия";
+                case "233": return "Чили";
+                case "202": return "Таджикистан";
+                case "190": return "Сербия";
+                case "221": return "Филиппины";
+                case "203": return "Таиланд";
+                case "179": return "Саудовская Аравия";
+                case "248": return "Индия";
+                case "191": return "Сингапур";
+                case "6": return "Алжир";
+                case "237": return "Эквадор";
+                case "231": return "Черногория";
+                case "211": return "Тунис";
+                case "2": return "Австрия";
+                case "24": return "Бельгия";
                 case "27": return "Болгария";
                 case "42": return "Венгрия";
                 case "57": return "Германия";
+                case "3": return "Азербайджан";
+                case "15": return "Армения";
+                case "19": return "Бангладеш";
+                case "23": return "Беларусь";
+                case "41": return "Великобритания";
+                case "46": return "Вьетнам";
+                case "222": return "Финляндия";
+                case "249": return "Ирландия";
+                case "212": return "Туркменистан";
+                case "247": return "Абхазия";
+                case "65": return "Грузия";
+                case "78": return "Индонезия";
+                case "87": return "Казахстан";
+                case "95": return "Кыргызстан";
+                case "134": return "Молдова";
+                case "170": return "Республика Корея";
+                case "200": return "США";
+                case "213": return "Турция";
+                case "215": return "Узбекистан";
+                case "216": return "Украина";
+                case "234": return "Швейцария";
+                case "242": return "Южно-Африканская Республика";
                 case "64": return "Греция";
                 case "83": return "Испания";
+                case "186": return "Сенегал";
+                case "197": return "Сомали";
                 case "84": return "Италия";
+                case "94": return "Кипр";
                 case "109": return "Латвия";
+                case "114": return "Литва";
+                case "144": return "Нидерланды";
+                case "166": return "Польша";
                 case "167": return "Португалия";
                 case "174": return "Румыния";
-                case "216": return "Украина";
+                case "194": return "Словакия";
+                case "195": return "Словения";
                 case "224": return "Франция";
-                case "232": return "Чешская Республика";
-                case "240": return "Эстония";
-                case "114": return "Литва";
-                case "65": return "Грузия";
-                case "3": return "Азербайджан";
-                case "221": return "Филиппины";
-                case "190": return "Сербия";
-                case "131": return "Мексика";
-                case "78": return "Индонезия";
-                case "128": return "Марокко";
-                case "165": return "Перу";
-                case "179": return "Саудовская Аравия";
-                case "191": return "Сингапур";
-                case "14": return "Аргентина";
-                case "248": return "Индия";
-                case "101": return "Колумбия";
-                case "124": return "Малайзия";
-                case "30": return "Босния и Герцеговина";
-                case "233": return "Чили";
-                case "80": return "Ирак";
-                case "46": return "Вьетнам";
-                case "77": return "Израиль";
-                case "213": return "Турция";
-                case "2": return "Австрия";
-                case "200": return "США";
-                case "203": return "Таиланд";
-                case "41": return "Великобритания";
-                case "91": return "Канада";
-                case "222": return "Финляндия";
+                case "228": return "Хорватия";
+                case "232": return "Чехия";
                 case "235": return "Швеция";
-
-                case "247": return "Абхазия";
-                case "73": return "Египет";
-                case "212": return "Туркмения";
+                case "240": return "Эстония";
+                case "103": return "Коста-Рика";
+                case "143": return "Нигерия";
+                case "70": return "Доминика";
+                case "71": return "Доминиканская Республика";
+                case "136": return "Монголия";
+                case "246": return "Япония";
                 case "1": return "Австралия";
+                case "5": return "Албания";
+                case "10": return "Ангола";
+                case "17": return "Афганистан";
+                case "18": return "Багамы";
+                case "20": return "Барбадос";
+                case "21": return "Бахрейн";
+                case "26": return "Бермуды";
+                case "28": return "Боливия";
+                case "38": return "Бутан";
+                case "40": return "Ватикан";
+                case "34": return "Виргинские острова (Великобритания)";
+                case "7": return "Виргинские острова (США)";
+                case "44": return "Внешние малые острова (США)";
+                case "48": return "Гаити";
+                case "51": return "Гана";
+                case "52": return "Гваделупа";
+                case "81": return "Иран";
+                case "79": return "Иордания";
+                case "225": return "Французская Полинезия";
+                case "241": return "Эфиопия";
+                case "251": return "Южная Осетия";
+                case "244": return "Южный Судан";
+                case "245": return "Ямайка";
+                case "112": return "Ливан";
+                case "108": return "Лаос";
+                case "151": return "Оман";
+                case "111": return "Либерия";
+                case "142": return "Нигер";
+                case "113": return "Ливия";
+                case "117": return "Маврикий";
+                case "118": return "Мавритания";
+                case "138": return "Мьянма";
+                case "119": return "Мадагаскар";
+                case "129": return "Мартиника";
+                case "139": return "Намибия";
+                case "141": return "Непал";
+                case "159": return "Пакистан";
+                case "164": return "Парагвай";
+                case "173": return "Руанда";
+                case "97": return "Тайвань (Китай)";
+                case "204": return "Танзания";
+                case "214": return "Уганда";
+                case "219": return "Фарерские острова";
+                case "218": return "Уругвай";
+                case "220": return "Фиджи";
+                case "226": return "Французские Южные и Антарктические территории";
+                case "236": return "Шри-Ланка";
+                case "147": return "Новая Зеландия";
+                case "90": return "Камерун";
+                case "74": return "Замбия";
+                case "104": return "Кот-д'Ивуар";
+                case "53": return "Гватемала";
+                case "209": return "Тринидад и Тобаго";
+                case "175": return "Сальвадор";
+                case "99": return "Китай";
+                case "172": return "Россия";
+
                 default: return "asd";
             }
 

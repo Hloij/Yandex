@@ -19,7 +19,7 @@ using Yandex.WorkerClass;
 using System.Timers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace Yandex
+namespace Yandex.Wind
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
