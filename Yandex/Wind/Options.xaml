@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Yandex.Wind"
         mc:Ignorable="d"
-        Title="Options" Height="450" Width="1000" ResizeMode="CanMinimize" FontSize="20" Background="Black">
+        Title="Options" Height="700" Width="1000" ResizeMode="CanMinimize" FontSize="20" Background="Black" Loaded="Window_Loaded">
     <Grid>
-        <TabControl>
+        <TabControl x:Name="tab">
             <TabItem Header="Настройки пользователя">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -22,7 +22,7 @@
                         <RowDefinition Height="80" MaxHeight="100"/>
                     </Grid.RowDefinitions>
                     <Label Content="Токен Яндекс" Grid.Row="0" Grid.Column="0" Margin="10,10,10,0"  VerticalAlignment="Bottom"  />
-                    <TextBox Padding="17" x:Name="tbTokenYandex" TextWrapping="Wrap" Grid.Row="1" Grid.Column="0" Margin="10"   />
+                    <TextBox  Padding="17" x:Name="tbTokenYandex" TextWrapping="Wrap" Grid.Row="1" Grid.Column="0" Margin="10"   />
                     <Label Content="Токен Adprofex" Grid.Row="0" Grid.Column="1" Margin="10,10,10,0"  VerticalAlignment="Bottom"/>
                     <TextBox Padding="17" x:Name="tbTokenAdprofex" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Margin="10"   />
                     <Label Content="Логин Adprofex" Grid.Row="0" Grid.Column="2" Margin="10,10,10,0"  VerticalAlignment="Bottom"/>
@@ -45,7 +45,7 @@
                         <RowDefinition Height="1*"/>
                         <RowDefinition Height="0.5*"/>
                     </Grid.RowDefinitions>
-                    <ListBox x:Name="lbCountryOptyons" Margin="10" Grid.RowSpan="3"/>
+                    <ListBox x:Name="lbCountryOptyons" Margin="10" Grid.RowSpan="3" SelectionChanged="lbSrlectCountryOptions"/>
                     <GroupBox Header="Настройки" FontSize="20" Margin="10" Grid.Column="1" Grid.RowSpan="3">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -104,8 +104,8 @@
                             </ComboBox>
                         </Grid>
                     </GroupBox>
-                    <Button Grid.Row="3" Grid.Column="1" Content="Сохранить" Margin="10" />
-                    <Button Grid.Row="3" Grid.Column="0" Content="Удалить" Margin="10" />
+                    <Button Grid.Row="3" Grid.Column="1" Content="Сохранить" Click="Button_Click" Margin="10" />
+                    <Button Grid.Row="3" Grid.Column="0" Content="Удалить" Margin="10" Click="Button_Click_1" />
                 </Grid>
             </TabItem>
             <TabItem Header="Рекламные компании">
@@ -115,29 +115,52 @@
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="1*"/>
-                  
+
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="0.2*"/>
                         <RowDefinition Height="0.6*"/>
                         <RowDefinition Height="0.2*"/>
                     </Grid.RowDefinitions>
-                    <ListBox x:Name="lbAdCompany" Margin="10" Grid.Row="1" Grid.RowSpan="2"/>
+                    <ListBox x:Name="lbAdCompany" Margin="10" Grid.Row="1" Grid.RowSpan="2" SelectionChanged="lbAdCompany_SelectionChanged"/>
                     <Label Content="Номер компании" Grid.Row="0" Grid.Column="1" Margin="10,10,10,0"  VerticalAlignment="Bottom"  />
                     <TextBox  VerticalAlignment="Top" Padding="17" x:Name="tbAdCompanyId" TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" Margin="10"   />
                     <Label Content="Название компании" Grid.Row="0" Grid.Column="2" Margin="10,10,10,0"  VerticalAlignment="Bottom"/>
                     <TextBox  VerticalAlignment="Top" Padding="17" x:Name="tbAdCompanyName" TextWrapping="Wrap" Grid.Row="1" Grid.Column="2" Margin="10"   />
                     <Label Content="Тип компании" Grid.Row="0" Grid.Column="3" Margin="10,10,10,0"  VerticalAlignment="Bottom"/>
-                    <ComboBox  VerticalAlignment="Top" Padding="17" x:Name="cbAdCompanyType"  Grid.Row="1" Grid.Column="3" Margin="10"   >
+                    <ComboBox  VerticalAlignment="Top" IsEditable="True" Padding="17" x:Name="cbAdCompanyType"  Grid.Row="1" Grid.Column="3" Margin="10"   >
                         <ComboBoxItem Content="Push"/>
-                    <ComboBoxItem Content="Native"/>
-                    <ComboBoxItem Content="Vitrina"/>
+                        <ComboBoxItem Content="Native"/>
+                        <ComboBoxItem Content="Vitrina"/>
                     </ComboBox>
                     <Button  VerticalAlignment="Center" Content="Сохранить" Grid.Row="2" Grid.Column="3" Margin="10" Click="btnUserSaveClick"/>
+                    <Button  VerticalAlignment="Center" Content="Удалить" Grid.Row="2" Grid.Column="2" Margin="10" Click="Button_Click_2"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Настройки потока">
-                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+                    <Label Content="Рекламные компании" VerticalAlignment="Bottom"/>
+                    <ComboBox Name="cbWhatAdCompanys" Grid.Row="1" Margin="10"/>
+                    <Label Content="Настройки стран" Grid.Column="1" VerticalAlignment="Bottom"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="cbWhatCountryOptions" Margin="10"/>
+                    <Label Content="Настройки устройств" Grid.Column="2" VerticalAlignment="Bottom"/>
+                    <ComboBox Grid.Row="1" Grid.Column="2" x:Name="cbWhatDeviceOptions" Margin="10"/>
+
+                    <CheckBox Content="Запрет прокси" Grid.Row="1" HorizontalAlignment="Center" Grid.Column="3" x:Name="cbProxy"/>
+                    <Button Content="Сохранить" Grid.Column="3" Grid.Row="3" Margin="10" Click="btnSaveChangeOptionsAdCompany"/>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>

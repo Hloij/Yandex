@@ -372,5 +372,11 @@ namespace Yandex.Wind
             Start();
             timer1.Start();
         }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            Options options = new Options();
+            options.Show();
+        }
     }
 }

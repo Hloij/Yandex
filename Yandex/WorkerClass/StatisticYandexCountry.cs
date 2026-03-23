@@ -76,7 +76,7 @@ namespace Yandex.WorkerClass
                 ("lang", "ru"), ("stat_type", "main") , ("period", "today") ,
                 ("dimension_field", "geo|country") ,("field", "partner_wo_nds"),("field", "cpmv_partner_wo_nds"),("field", "impressions"),
                 ("order_by", "[{\"field\":\"geo\",\"dir\":\"asc\"},{\"field\":\"partner_wo_nds\",\"dir\":\"asc\"}]"),("entity_field", "domain")
-            },_userOptions.TokenYandex
+            }, _userOptions.TokenYandex
             );
             _apiDeviceYandex = await Api<YandexApiDevice.YandexDevice>.PostApiRespons("https://partner.yandex.ru/api/statistics2/get", Params: new (string, string)[9]
             {
@@ -177,44 +177,88 @@ namespace Yandex.WorkerClass
 
         async Task Sravnenie()
         {
-            for (int j = 0; j < _apiContryYandex.data.points.Count; j++)
+            for (int h = 1; h < _apiCountryAdprofex.Count; h++)
             {
-                for (int h = 0; h < _apiCountryAdprofex.Count; h++)
+
+                for (int i = 0; i < _apiCountryAdprofex[0].data.Count; i++)
+                {
+                    var st = _apiCountryAdprofex[h].data.Where(p => p.country == _apiCountryAdprofex[0].data[i].country).FirstOrDefault();
+                    if (st != null)
+                    {
+                        _apiCountryAdprofex[0].data[i] = _apiCountryAdprofex[0].data[i] + st;
+                        _apiCountryAdprofex[h].data.Remove(st);
+                    }
+                }
+            }
+            for (int h = 0; h < _apiCountryAdprofex.Count; h++)
+            {
+                for (int j = 0; j < _apiContryYandex.data.points.Count; j++)
                 {
                     bool was = true;
+
                     for (int i = 0; i < _apiCountryAdprofex[h].data.Count - 1; i++)
                     {
                         try
                         {
+
+
                             string country = Translate(_apiCountryAdprofex[h].data[i].country);
                             _apiContryYandex.data.points[j].dimensions.geo = _apiContryYandex.data.points[j].dimensions.geo.Replace("ё", "е");
                             if (country == "Чешская республика") country = "Чехия";
                             if (_apiContryYandex.data.points[j].dimensions.geo == "Киргизия") _apiContryYandex.data.points[j].dimensions.geo = "Кыргызстан";
                             if (_apiContryYandex.data.points[j].dimensions.geo == country)
                             {
-                                if (_statCountryNow.FirstOrDefault(p => p.Name == country) == null)
+                                if (_statCountryNow.FirstOrDefault(p => p.Name == _apiContryYandex.data.points[j].dimensions.geo) == null)
                                 {
-                                    YandexStat statCountryDevice = new();
-                                    statCountryDevice.Domen = _apiContryYandex.data.points[j].dimensions.domain;
-                                    statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
-                                    statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
-                                    statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
-                                    statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
-                                    statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].buy_count);
-                                    statCountryDevice.CPC = Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp);
-                                    statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
-                                    statCountryDevice.Date = DateTime.Now;
-                                    statCountryDevice.Rr = _apiContryYandex.data.points[j].measures[0].partner_wo_nds / _apiCountryAdprofex[h].data[i].dsp_flow;
-                                    statCountryDevice.Rashod = _apiCountryAdprofex[h].data[i].dsp_flow;
-                                    statCountryDevice.DohodClear = _apiContryYandex.data.points[j].measures[0].partner_wo_nds - _apiCountryAdprofex[h].data[i].dsp_flow;
-                                    string id = ChangeCountry(statCountryDevice.Name);
-
-                                    statCountryDevice.Kof = Micros1.Item2.campaign_micro_bidding._3.Where(p => p.id == id).First().coeff;
-                                    _statCountryNow.Add(statCountryDevice);
-                                    was = false;
-                                    break;
+                                    if (_statCountryNow.FirstOrDefault(p => p.Name == country) == null)
+                                    {
+                                        YandexStat statCountryDevice = new();
+                                        statCountryDevice.Domen = _apiContryYandex.data.points[j].dimensions.domain;
+                                        statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
+                                        statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
+                                        statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
+                                        statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
+                                        statCountryDevice.CPC = Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp);
+                                        statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
+                                        statCountryDevice.Date = DateTime.Now;
+                                        statCountryDevice.Rr = _apiContryYandex.data.points[j].measures[0].partner_wo_nds / _apiCountryAdprofex[h].data[i].dsp_flow;
+                                        statCountryDevice.Rashod = _apiCountryAdprofex[h].data[i].dsp_flow;
+                                        statCountryDevice.DohodClear = _apiContryYandex.data.points[j].measures[0].partner_wo_nds - _apiCountryAdprofex[h].data[i].dsp_flow;
+                                        string id = ChangeCountry(statCountryDevice.Name);
+                                        statCountryDevice.Kof = Micros1.Item2.campaign_micro_bidding._3.Where(p => p.id == id).First().coeff;
+                                        _statCountryNow.Add(statCountryDevice);
+                                        was = false;
+                                        break;
+                                    }
                                 }
+                                else
+                                {
+
+                                    var stat = _statCountryNow.FirstOrDefault(p => p.Name == _apiContryYandex.data.points[j].dimensions.geo);
+                                    stat.CPC = Math.Round(stat.CPC + Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp) / 2, 2);
+                                    stat.Rashod += _apiCountryAdprofex[h].data[i].dsp_flow;
+                                    stat.DohodClear = stat.Dohod - stat.Rashod;
+
+                                    was = false;
+
+                                    break;
+
+                                }
+
                             }
+                            //else
+                            //{
+
+                            //    var stat = _statCountryNow.FirstOrDefault(p => p.Name == _apiContryYandex.data.points[j].dimensions.geo);                                
+                            //    stat.CPC = Math.Round(stat.CPC + Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp) / 2, 2);
+                            //    stat.Rashod += _apiCountryAdprofex[h].data[i].dsp_flow;
+                            //    stat.DohodClear = stat.Dohod - stat.Rashod;
+
+                            //    was = false;
+
+
+
+                            //}
                         }
                         catch { continue; }
                     }
@@ -348,6 +392,19 @@ namespace Yandex.WorkerClass
                     _apiDeviceAdprofex[i].data.Add(mob);
                 }
                 catch { }
+            }
+            for (int h = 1; h < _apiDeviceAdprofex.Count; h++)
+            {
+
+                for (int i = 0; i < _apiDeviceAdprofex[0].data.Count; i++)
+                {
+                    var st = _apiDeviceAdprofex[h].data.Where(p => p.os == _apiDeviceAdprofex[0].data[i].os).FirstOrDefault();
+                    if (st != null)
+                    {
+                        _apiDeviceAdprofex[0].data[i] = _apiDeviceAdprofex[0].data[i] + st;
+                        _apiDeviceAdprofex[h].data.Remove(st);
+                    }
+                }
             }
             for (int j = 0; j < _apiDeviceYandex.data.points.Count; j++)
             {
@@ -734,10 +791,11 @@ namespace Yandex.WorkerClass
             micro += "],\r\n\"1\":\r\n[{\"id\":" + "1" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[0].coeff + "}";
 
             micro += ",{\"id\":" + "3" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[1].coeff + "}]}";
+
             string group = "";
             switch (_countryOptions.Group)
             {
-                case "Всё": group = "[2,3,1]"; break;
+                case "Все": group = "[2,3,1]"; break;
                 case "Премиум": group = "[3]"; break;
                 case "Медиум": group = "[2]"; break;
                 case "Бомжи": group = "[1]"; break;
@@ -747,29 +805,31 @@ namespace Yandex.WorkerClass
 
                     group = "[2,1]"; break;
             }
-            if (_advertisingCompany.Where(p => p.Name.Contains(_advertisingStreams.Name)).First().Type == "Push")
-            {
-                micro = micro.Remove(micro.Length - 1);
-                micro += $",\"active_site_groups\":{group},\"min_subscription_days\":0,\"max_subscription_days\":9999";
-            }
-            if (_advertisingCompany.Where(p => p.Name.Contains(_advertisingStreams.Name)).First().Type == "Vitrina")
-            {
-                micro = micro.Remove(micro.Length - 1);
-                micro += $",\"active_site_groups\":{group}";
-            }
-            if (_advertisingStreams.Proxy == "True")
-            {
-                micro += ",\"exclude_proxy_ips\":true";
-            }
-            else
-            {
-                micro += ",\"exclude_proxy_ips\":false";
-            }
-            micro += "}";
             string[] ss = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
             for (int h = 0; h < ss.Length; h++)
             {
-                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro, _userOptions.TokenAdprofex);
+                string micro1 = micro;
+                if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Push")
+                {
+                   
+                    micro1 += $",\"active_site_groups\":{group},\"min_subscription_days\":0,\"max_subscription_days\":9999";
+                }
+                if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Vitrina")
+                {
+                  
+                    micro1 += $",\"active_site_groups\":{group}";
+                }
+                if (_advertisingStreams.Proxy == "True")
+                {
+                    micro1 += ",\"exclude_proxy_ips\":true";
+                }
+                else
+                {
+                    micro1 += ",\"exclude_proxy_ips\":false";
+                }
+                micro1 += "}";
+
+                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
             }
 
         }
@@ -841,7 +901,7 @@ namespace Yandex.WorkerClass
             string group = "";
             switch (_countryOptions.Group)
             {
-                case "Всё": group = "[2,3,1]"; break;
+                case "Все": group = "[2,3,1]"; break;
                 case "Премиум": group = "[3]"; break;
                 case "Медиум": group = "[2]"; break;
                 case "Бомжи": group = "[1]"; break;
@@ -851,29 +911,31 @@ namespace Yandex.WorkerClass
 
                     group = "[2,1]"; break;
             }
-            if (_advertisingCompany.Where(p => p.Name.Contains(_advertisingStreams.Name)).First().Type == "Push")
-            {
-                micro = micro.Remove(micro.Length - 1);
-                micro += $",\"active_site_groups\":{group},\"min_subscription_days\":0,\"max_subscription_days\":9999,";
-            }
-            if (_advertisingCompany.Where(p => p.Name.Contains(_advertisingStreams.Name)).First().Type == "Vitrina")
-            {
-                micro = micro.Remove(micro.Length - 1);
-                micro += $",\"active_site_groups\":{group},";
-            }
-            if (_advertisingStreams.Proxy == "True")
-            {
-                micro += ",\"exclude_proxy_ips\":true" + "}";
-            }
-            else
-            {
-                micro += ",\"exclude_proxy_ips\":false" + "}";
-            }
-            await Task.Delay(1000);
             string[] ss = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
             for (int h = 0; h < ss.Length; h++)
             {
-                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro, _userOptions.TokenAdprofex);
+                string micro1 = micro;
+                if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Push")
+                {
+
+                    micro1 += $",\"active_site_groups\":{group},\"min_subscription_days\":0,\"max_subscription_days\":9999";
+                }
+                if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Vitrina")
+                {
+
+                    micro1 += $",\"active_site_groups\":{group}";
+                }
+                if (_advertisingStreams.Proxy == "True")
+                {
+                    micro1 += ",\"exclude_proxy_ips\":true";
+                }
+                else
+                {
+                    micro1 += ",\"exclude_proxy_ips\":false";
+                }
+                micro1 += "}";
+
+                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
             }
 
 

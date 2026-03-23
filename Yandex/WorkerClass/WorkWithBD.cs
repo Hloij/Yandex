@@ -40,11 +40,11 @@ namespace Yandex.WorkerClass
             {
                 if (i + 1 == properties.Length)
                 {
-                    sqlExpression += $"'{properties[i].Name}'={properties[i].GetValue(obj)}";
+                    sqlExpression += $"'{properties[i].Name}'='{properties[i].GetValue(obj)}'";
                 }
                 else
                 {
-                    sqlExpression += $"'{properties[i].Name}'={properties[i].GetValue(obj)},";
+                    sqlExpression += $"'{properties[i].Name}'='{properties[i].GetValue(obj)}',";
                 }
 
             }

@@ -24,6 +24,14 @@ namespace Yandex.Model
             public double ctr { get; set; }
             public int conversion_rate { get; set; }
             public bool? summary { get; set; }
+            public static Datum operator +(Datum datum, Datum datum1)
+            {
+                datum.buy_count = (Convert.ToInt64(datum.buy_count) + Convert.ToInt64(datum1.buy_count)).ToString();
+                datum.click_count += datum1.click_count;
+                datum.click_price_dsp = Math.Round((datum1.click_price_dsp + datum.click_price_dsp) / 2, 2);
+                datum.dsp_flow += datum1.dsp_flow;
+                return datum;
+            }
         }
 
         public class Link
@@ -49,6 +57,7 @@ namespace Yandex.Model
             public int to { get; set; }
             public int total { get; set; }
         }
+        
 
 
     }
@@ -68,6 +77,14 @@ namespace Yandex.Model
             public double ctr { get; set; }
             public double conversion_rate { get; set; }
             public bool? summary { get; set; }
+            public static Datum operator +(Datum datum, Datum datum1)
+            {
+                datum.buy_count = (Convert.ToInt64(datum.buy_count)+ Convert.ToInt64(datum1.buy_count)).ToString();
+                datum.click_count += datum1.click_count;
+                datum.click_price_dsp = Math.Round((datum1.click_price_dsp + datum.click_price_dsp) / 2, 2);
+                datum.dsp_flow += datum1.dsp_flow;
+                return datum;
+            }
         }
 
         public class Link
