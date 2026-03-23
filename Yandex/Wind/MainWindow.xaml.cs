@@ -103,7 +103,7 @@ namespace Yandex.Wind
             Nuller.ItemsSource = statisticYandexCountry.Null.ToList();
             viborkaTEST.IsEnabled = true;
            
-            //InPlot();
+            InPlot();
         }
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -215,7 +215,7 @@ namespace Yandex.Wind
         {
             month = 0;
             Plot.Plot.Clear();
-            List<StatCountryDevice> StatAll = WorkWithBD<StatCountryDevice>.Read(new StatCountryDevice()).Result;
+            List<StatCountryDevice> StatAll = StatisticYandexCountry.StatCountryDeviceLastStatic;
             List<YandexStat> LastStat = new List<YandexStat>();
 
             for (int i = 0; i < StatAll.Count; i++)
@@ -271,7 +271,7 @@ namespace Yandex.Wind
                 foreach (var item in StatAll)
                 {
                     DateTime a1 = Convert.ToDateTime(item.Date);
-                    if (a1 == daysArray[h])
+                    if (a1.Date == daysArray[h].Date)
                     {
                         statmonth.Add(new YandexStat() + item);
                     }
@@ -309,7 +309,8 @@ namespace Yandex.Wind
                 }
                 for (int j = 0; j < stata.Count; j++)
                 {
-                    dohod[h] += stata[j].Dohod;
+                    if (stata[j].Name!= "Мобильный телефон"&& stata[j].Name != "Компьютер" && stata[j].Name != "Планшет")
+                    dohod[h] += stata[j].DohodClear;
                 }
             }
 

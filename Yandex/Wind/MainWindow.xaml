@@ -8,7 +8,7 @@
        
         xmlns:local="clr-namespace:Yandex.Wind"
         mc:Ignorable="d"
-        Title="MainWindow" Height="1080" Width="1920" Background="Black" Loaded="Window_Loaded">
+        Title="MainWindow" Height="1440" Width="3440" Background="Black" Loaded="Window_Loaded">
     <Grid >
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -21,7 +21,7 @@
             <ColumnDefinition Width="0*"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
-        <Button Content="Настройки" Grid.Row="2" Margin="10" Click="Button_Click_1"/>
+       
         <GroupBox HorizontalAlignment="Center"  Margin="0,5,0,5"  Header="         Управление" FontSize="14" Grid.RowSpan="3"  >
             <StackPanel>
                
@@ -33,17 +33,17 @@
                 <TextBox Grid.Row="9" x:Name="time" IsReadOnly="True" FontSize="14" TextAlignment="Center" Text="Таймер" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10" Visibility="Visible" Height="30" />
 
                 <Label  Content="Минус"    Grid.Row="19" Grid.Column="1"   Foreground="#FF7800"/>
-                <ListBox  x:Name="Down" Grid.Row="21"   Grid.Column="1"   Visibility="Visible" SelectionChanged="Upper_Selected" />
+                <ListBox  x:Name="Down" Grid.Row="21"   Grid.Column="1" MaxHeight="270"  Visibility="Visible" SelectionChanged="Upper_Selected" />
 
                 <Label  Content="Плюс"   Grid.Row="23" Grid.Column="1"  Foreground="#FF7800"/>
-                <ListBox x:Name="Upper" Grid.Row="25"   Grid.Column="1"   Visibility="Visible" SelectionChanged="Upper_Selected" />
+                <ListBox x:Name="Upper" Grid.Row="25"  MaxHeight="300"  Grid.Column="1"   Visibility="Visible" SelectionChanged="Upper_Selected" />
 
                 <Label  Content="Нули"   Grid.Row="27" Grid.Column="1"   Foreground="#FF7800"/>
-                <ListBox x:Name="Nuller" Grid.Row="29" Grid.Column="1"    Visibility="Visible" />
-                <ListBox Visibility="Hidden" x:Name="For1" Grid.Row="31" Grid.Column="1"    SelectionChanged="Upper_Selected"  />
+                <ListBox x:Name="Nuller" Grid.Row="29" Grid.Column="1" MaxHeight="300"   Visibility="Visible" />
+               
                 <CheckBox  Grid.Column="1"  x:Name="Zero" Grid.Row="31" Content="Нули"  Foreground="#FF7800" Click="AutoPil_Checked"/>
                 <Button x:Name="viborkaTEST" Click="Button_Click" Content="Произвести выборку" FontSize="13" Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10,5,10,0" Height="30" />
-
+                <Button Content="Настройки" Grid.Row="2" Margin="10" Click="Button_Click_1"/>
             </StackPanel>
         </GroupBox>
 

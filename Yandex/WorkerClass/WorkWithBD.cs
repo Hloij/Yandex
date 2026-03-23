@@ -122,23 +122,34 @@ namespace Yandex.WorkerClass
                         {
                            
                             var vs = reader.GetValue(i);
+                            Type type1 = properties[i].PropertyType;
                             try
                             {
-                                properties[i].SetValue(value, vs);
+                                switch (type1.Name)
+                                {
+                                    case "Double": properties[i].SetValue(value, Convert.ToDouble(vs)); break;
+                                    case "DateTime": properties[i].SetValue(value, Convert.ToDateTime(vs)); ; break;
+                                    default: properties[i].SetValue(value, vs); break;
+                                }
                             }
-                            catch
-                            {
-                                if (properties[i].PropertyType.Name == "Double")
-                                {
-                                    properties[i].SetValue(value, Convert.ToDouble(vs));
-                                }
-                                if (properties[i].PropertyType.Name == "DateTime")
-                                {
-                                    properties[i].SetValue(value, Convert.ToDateTime(vs));
-                                }
+                            catch (Exception exception) { }
+                            //try
+                            //{
+                            //    properties[i].SetValue(value, vs);
+                            //}
+                            //catch
+                            //{
+                            //    if (properties[i].PropertyType.Name == "Double")
+                            //    {
+                            //        properties[i].SetValue(value, Convert.ToDouble(vs));
+                            //    }
+                            //    if (properties[i].PropertyType.Name == "DateTime")
+                            //    {
+                            //        properties[i].SetValue(value, Convert.ToDateTime(vs));
+                            //    }
                                 
                                 
-                            }
+                            //}
                         }
 
                         values.Add(value);
