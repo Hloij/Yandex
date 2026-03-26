@@ -147,7 +147,56 @@ namespace Yandex.Wind
             }
             catch { }
         }
+        private void Button_Click11(object sender, RoutedEventArgs e)
+        {
+            var vs = OptionsDevice.Where(p => p.Id == Convert.ToInt64(tbDeviceOptionsName.Text)).FirstOrDefault();
+            if (vs != null)
+            {
+                OptionsDevice.Remove(vs);
+                DeviceOptions optionsDevice = new DeviceOptions();
+                optionsDevice.Id = Convert.ToInt64(tbDeviceOptionsName.Text);
+                optionsDevice.KoefProc = Convert.ToInt64(tbDeviceOptionsProc.Text);
+                optionsDevice.Prosmotr = Convert.ToInt64(tbDeviceOptionsProsmotr.Text);
+              
+                optionsDevice.KoefUp = Convert.ToInt64(tbDeviceOptionsUp.Text);
+                optionsDevice.CPMV = Convert.ToDouble(tbDeviceOptionsCPMV.Text);
+                optionsDevice.KoefDown = Convert.ToInt64(tbDeviceOptionsDown.Text);
+                optionsDevice.Max = Convert.ToInt64(tbDeviceOptionsMax.Text);
+                optionsDevice.Min = Convert.ToInt64(tbDeviceOptionsMin.Text);
+               
+                OptionsDevice.Add(optionsDevice);
+                WorkWithBD<DeviceOptions>.Change(optionsDevice).Wait();
+                this.Window_Loaded(sender, e);
+            }
+            else
+            {
+                DeviceOptions optionsDevice = new DeviceOptions();
+                optionsDevice.Id = Convert.ToInt64(tbDeviceOptionsName.Text);
+                optionsDevice.KoefProc = Convert.ToInt64(tbDeviceOptionsProc.Text);
+                optionsDevice.Prosmotr = Convert.ToInt64(tbDeviceOptionsProsmotr.Text);
+               
+                optionsDevice.KoefUp = Convert.ToInt64(tbDeviceOptionsUp.Text);
+                optionsDevice.CPMV = Convert.ToDouble(tbDeviceOptionsCPMV.Text);
+                optionsDevice.KoefDown = Convert.ToInt64(tbDeviceOptionsDown.Text);
+                optionsDevice.Max = Convert.ToInt64(tbDeviceOptionsMax.Text);
+                optionsDevice.Min = Convert.ToInt64(tbDeviceOptionsMin.Text);
+             
+                OptionsDevice.Add(optionsDevice);
+                WorkWithBD<DeviceOptions>.Add(optionsDevice).Wait();
+                this.Window_Loaded(sender, e);
+            }
+        }
 
+        private void Button_Click_111(object sender, RoutedEventArgs e)
+        {
+            var vs = OptionsDevice.Where(p => p.Id == Convert.ToInt64(tbDeviceOptionsName.Text)).FirstOrDefault();
+            if (vs != null)
+            {
+                OptionsDevice.Remove(vs);
+                WorkWithBD<DeviceOptions>.Del(vs).Wait();
+                this.Window_Loaded(sender, e);
+            }
+        }
         private void Button_Click(object sender, RoutedEventArgs e)
         {
 
@@ -290,5 +339,6 @@ namespace Yandex.Wind
             this.Window_Loaded(sender,e );
         }
 
+       
     }
 }

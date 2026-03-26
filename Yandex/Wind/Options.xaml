@@ -108,6 +108,70 @@
                     <Button Grid.Row="3" Grid.Column="0" Content="Удалить" Margin="10" Click="Button_Click_1" />
                 </Grid>
             </TabItem>
+            <TabItem Header="Настройки устройств">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="0.5*"/>
+                    </Grid.RowDefinitions>
+                    <ListBox x:Name="lbDeviceyOptyons" Margin="10" Grid.RowSpan="3" SelectionChanged="lbSrlectCountryOptions"/>
+                    <GroupBox Header="Настройки" FontSize="20" Margin="10" Grid.Column="1" Grid.RowSpan="3">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="1*"/>
+
+                            </Grid.RowDefinitions>
+                            <Label Content="Название" Grid.Row="0" VerticalAlignment="Bottom" Grid.Column="1" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsName" Grid.Row="1" Grid.Column="1"  Margin="10,0,10,20"/>
+
+                           <Label Content="Увеличение" Grid.Row="2" VerticalAlignment="Bottom" Grid.Column="1" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsUp" Grid.Row="3" Grid.Column="1"  Margin="10,0,10,20"/>
+
+                            <Label Content="Уменьшение" Grid.Row="2" VerticalAlignment="Bottom" Grid.Column="2" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsDown" Grid.Row="3" Grid.Column="2"  Margin="10,0,10,20"/>
+
+                            <Label Content="Проц. дохода" Grid.Row="4" VerticalAlignment="Bottom" Grid.Column="0" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsProc" Grid.Row="5" Grid.Column="0"  Margin="10,0,10,20"/>
+
+                            <Label Content="Мин. Нули" Grid.Row="4" VerticalAlignment="Bottom" Grid.Column="1" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsMin" Grid.Row="5" Grid.Column="1"  Margin="10,0,10,20"/>
+
+                            <Label Content="Макс. Нули" Grid.Row="4" VerticalAlignment="Bottom" Grid.Column="2" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsMax" Grid.Row="5" Grid.Column="2"  Margin="10,0,10,20"/>
+
+                            <Label Content="CPMV" Grid.Row="2" VerticalAlignment="Bottom" Grid.Column="0" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsCPMV" Grid.Row="3" Grid.Column="0"  Margin="10,0,10,20"/>
+
+                            <Label Content="Просмотры" Grid.Row="6" VerticalAlignment="Bottom" Grid.Column="1" Margin="10,0,10,0"/>
+                            <TextBox x:Name="tbDeviceOptionsProsmotr" Grid.Row="7" Grid.Column="1"  Margin="10,0,10,20"/>
+
+                         
+                        </Grid>
+                    </GroupBox>
+                    <Button Grid.Row="3" Grid.Column="1" Content="Сохранить" Click="Button_Click11" Margin="10" />
+                    <Button Grid.Row="3" Grid.Column="0" Content="Удалить" Margin="10" Click="Button_Click_111" />
+                </Grid>
+            </TabItem>
             <TabItem Header="Рекламные компании">
                 <Grid>
                     <Grid.ColumnDefinitions>

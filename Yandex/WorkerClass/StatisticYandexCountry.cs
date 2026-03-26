@@ -685,8 +685,21 @@ namespace Yandex.WorkerClass
         async Task ChangeKoefAsync()
         {
             List<string> _Up = new();
+            
             for (int i = 0; i < Up.Count; i++)
             {
+                if (Up[i] == "Мобильный телефон")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[1].coeff += (int)_deviceOptions.KoefUp;
+                    continue;
+                }
+                else if (Up[i] == "Компьютер")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[0].coeff += (int)_deviceOptions.KoefUp;
+                    continue;
+
+                }
+                
                 string vs = ChangeCountry(Up[i]);
 
                 _Up.Add(vs);
@@ -694,6 +707,17 @@ namespace Yandex.WorkerClass
             List<string> _Down = new();
             for (int i = 0; i < Down.Count; i++)
             {
+                if (Up[i] == "Мобильный телефон")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[1].coeff -= (int)_deviceOptions.KoefDown;
+                    continue;
+                }
+                else if (Up[i] == "Компьютер")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[0].coeff -= (int)_deviceOptions.KoefDown;
+                    continue;
+
+                }
                 string vs = ChangeCountry(Down[i]);
 
                 _Down.Add(vs);
@@ -701,6 +725,17 @@ namespace Yandex.WorkerClass
             List<string> _Nuls = new();
             for (int i = 0; i < Null.Count; i++)
             {
+                if (Up[i] == "Мобильный телефон")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[1].coeff += (int)_deviceOptions.KoefUp;
+                    continue;
+                }
+                else if (Up[i] == "Компьютер")
+                {
+                    this.Micros1.Item2.campaign_micro_bidding._1[0].coeff += (int)_deviceOptions.KoefUp;
+                    continue;
+
+                }
                 string vs = ChangeCountry(Null[i]);
 
                 _Nuls.Add(vs);
