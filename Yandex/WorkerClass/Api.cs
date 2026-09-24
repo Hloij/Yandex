@@ -77,6 +77,7 @@ namespace Yandex.WorkerClass
             m1: i++;
             RestResponse response = await client.ExecuteAsync(request);
             if (!response.IsSuccessStatusCode && i < 10) { await Task.Delay(50000); goto m1; }
+
             return response.IsSuccessStatusCode;
             //RestClient restClient = new RestClient();
             //var request = new RestRequest(Url, Method.Put);

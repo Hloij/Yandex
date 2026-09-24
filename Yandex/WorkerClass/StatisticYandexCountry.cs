@@ -39,11 +39,13 @@ namespace Yandex.WorkerClass
         List<AdpProfexApiDevice.ApiDevice> _apiDeviceAdprofex = new();
         bool _zero;
         string _name;
-        internal static UserOptions _userOptions { get; set; }
-        internal static AdvertisingStreams _advertisingStreams;
-        internal static List<AdvertisingCompany> _advertisingCompany;
-        internal static DeviceOptions _deviceOptions;
-        internal static CountryOprions _countryOptions;
+        string Browser;
+        string Browser1;
+        internal UserOptions _userOptions { get; set; }
+        internal AdvertisingStreams _advertisingStreams;
+        internal List<AdvertisingCompany> _advertisingCompany;
+        internal DeviceOptions _deviceOptions;
+        internal CountryOprions _countryOptions;
         (string, ApiInfoCompainCPC) Micros1;
         (string, string) Filter { get; set; }
         public List<string> Up { get; set; } = new();
@@ -78,6 +80,7 @@ namespace Yandex.WorkerClass
                 ("order_by", "[{\"field\":\"geo\",\"dir\":\"asc\"},{\"field\":\"partner_wo_nds\",\"dir\":\"asc\"}]"),("entity_field", "domain")
             }, _userOptions.TokenYandex
             );
+            _apiContryYandex.data.points = _apiContryYandex.data.points.Where(p => p.dimensions.domain.Contains(_name)).ToList();
             _apiDeviceYandex = await Api<YandexApiDevice.YandexDevice>.PostApiRespons("https://partner.yandex.ru/api/statistics2/get", Params: new (string, string)[9]
             {
                 ("lang", "ru"), ("stat_type", "main") , ("period", "today") ,
@@ -85,7 +88,7 @@ namespace Yandex.WorkerClass
                 ("order_by", "[{\"field\":\"device\",\"dir\":\"asc\"},{\"field\":\"partner_wo_nds\",\"dir\":\"asc\"}]"),("entity_field", "domain"),("entity_field", "device")
             }, _userOptions.TokenYandex
             );
-
+            _apiDeviceYandex.data.points = _apiDeviceYandex.data.points.Where(p => p.dimensions.domain.Contains(_name)).ToList();
         }
         async Task<bool> GetStatLastAsync()
         {
@@ -133,9 +136,9 @@ namespace Yandex.WorkerClass
                 }
             }
 
+            var stats = LastStat.Where(p => p.Domen.Contains(_name)).ToList();
 
-
-            _statCountryDeviceLast = LastStat;
+            _statCountryDeviceLast = stats;
             StatCountryDeviceLastStatic = LastStat2;
             return true;
         }
@@ -144,9 +147,11 @@ namespace Yandex.WorkerClass
             try
             {
                 string[] valuseDate = new string[] { DateTime.Today.ToString(), DateTime.Today.ToString().Replace("0:00:00", "23:59:59") };
+
                 string[] ac = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < ac.Length; i++)
                 {
+                    ac[i] = _advertisingCompany.Where(p => p.Name == ac[i]).FirstOrDefault().Id.ToString();
                     CompaingFields compaingFields = PreparationForRequst.InfoForZaprosAdFox(valuseDate, ac[i], "country");//формироввание объекта для запроса
                     string obj = obj = JsonConvert.SerializeObject(compaingFields);
                     // string requsttype = $"CPC\nПолучение статы AdProfex \n Rk:{potoki.Name}";
@@ -163,6 +168,7 @@ namespace Yandex.WorkerClass
                 string[] ac = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < ac.Length; i++)
                 {
+                    ac[i] = _advertisingCompany.Where(p => p.Name == ac[i]).FirstOrDefault().Id.ToString();
                     CompaingFields compaingFields = PreparationForRequst.InfoForZaprosAdFox(valuseDate, ac[i], "os");//формироввание объекта для запроса
                     string obj = obj = JsonConvert.SerializeObject(compaingFields);
                     // string requsttype = $"CPC\nПолучение статы AdProfex \n Rk:{potoki.Name}";
@@ -217,7 +223,7 @@ namespace Yandex.WorkerClass
                                         statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
                                         statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
                                         statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
-                                        statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
+                                        statCountryDevice.Prosmotr = Convert.ToInt64(_apiCountryAdprofex[h].data[i].buy_count);
                                         statCountryDevice.CPC = Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp);
                                         statCountryDevice.Click = Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
                                         statCountryDevice.Date = DateTime.Now;
@@ -235,10 +241,15 @@ namespace Yandex.WorkerClass
                                 {
 
                                     var stat = _statCountryNow.FirstOrDefault(p => p.Name == _apiContryYandex.data.points[j].dimensions.geo);
-                                    stat.CPC = Math.Round(stat.CPC + Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp) / 2, 2);
+
+
+
+                                    stat.CPC = Math.Round((stat.CPC + Convert.ToDouble(_apiCountryAdprofex[h].data[i].click_price_dsp)) / 2, 2);
+                                    stat.Click += Convert.ToInt64(_apiCountryAdprofex[h].data[i].click_count);
+
+                                    stat.Rr = Math.Round((stat.Rr + (_apiContryYandex.data.points[j].measures[0].partner_wo_nds / _apiCountryAdprofex[h].data[i].dsp_flow)) / 2, 2);
                                     stat.Rashod += _apiCountryAdprofex[h].data[i].dsp_flow;
                                     stat.DohodClear = stat.Dohod - stat.Rashod;
-
                                     was = false;
 
                                     break;
@@ -271,7 +282,7 @@ namespace Yandex.WorkerClass
                             statCountryDevice.Name = _apiContryYandex.data.points[j].dimensions.geo;
                             statCountryDevice.CPMV = _apiContryYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
                             statCountryDevice.Dohod = _apiContryYandex.data.points[j].measures[0].partner_wo_nds;
-                            statCountryDevice.Prosmotr = _apiContryYandex.data.points[j].measures[0].impressions;
+                            statCountryDevice.Prosmotr = 0;
                             statCountryDevice.Click = 0;
                             statCountryDevice.CPC = 0;
                             statCountryDevice.Click = 0;
@@ -423,7 +434,7 @@ namespace Yandex.WorkerClass
                                 statCountryDevice.Name = _apiDeviceYandex.data.points[j].dimensions.device;
                                 statCountryDevice.CPMV = _apiDeviceYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
                                 statCountryDevice.Dohod = _apiDeviceYandex.data.points[j].measures[0].partner_wo_nds;
-                                statCountryDevice.Prosmotr = _apiDeviceYandex.data.points[j].measures[0].impressions;
+                                statCountryDevice.Prosmotr = Convert.ToInt64(_apiCountryAdprofex[h].data[i].buy_count);
                                 statCountryDevice.Click = Convert.ToInt64(_apiDeviceAdprofex[h].data[i].buy_count);
                                 statCountryDevice.CPC = Convert.ToDouble(_apiDeviceAdprofex[h].data[i].click_price_dsp);
                                 statCountryDevice.Click = Convert.ToInt64(_apiDeviceAdprofex[h].data[i].click_count);
@@ -455,7 +466,7 @@ namespace Yandex.WorkerClass
                             statCountryDevice.Name = _apiDeviceYandex.data.points[j].dimensions.device;
                             statCountryDevice.CPMV = _apiDeviceYandex.data.points[j].measures[0].cpmv_partner_wo_nds;
                             statCountryDevice.Dohod = _apiDeviceYandex.data.points[j].measures[0].partner_wo_nds;
-                            statCountryDevice.Prosmotr = _apiDeviceYandex.data.points[j].measures[0].impressions;
+                            statCountryDevice.Prosmotr = 0;
                             statCountryDevice.Click = 0;
                             statCountryDevice.CPC = 0;
                             statCountryDevice.Click = 0;
@@ -484,7 +495,7 @@ namespace Yandex.WorkerClass
                     }
                 }
             }
-
+            //
             for (int i = 0; i < _statCountryNow.Count; i++)
             {
                 for (int j = 0; j < _statCountryDeviceLast.Count; j++)
@@ -505,14 +516,17 @@ namespace Yandex.WorkerClass
                             }
                             if (vs.DohodClear < 0)
                             {
-                                if (vs.Click > 0)
-                                {
-                                    Down.Add(_statCountryNow[i].Name);
-                                    _statCountryNow[i].Kof -= _countryOptions.KoefDown;
-                                }
+                                if (_statCountryNow[i].Kof > 2)
+                                    if (vs.Click > 0)
+                                    {
+                                        {
+                                            Down.Add(_statCountryNow[i].Name);
+                                            _statCountryNow[i].Kof -= _countryOptions.KoefDown;
+                                        }
+                                    }
 
                             }
-                            if (vs.DohodClear == 0 && _zero)
+                            if (vs.DohodClear == 0 && _zero && _statCountryNow[i].DohodClear >= 0)
                             {
                                 if (this._statCountryNow[i].Kof > _countryOptions.Min) //проверяем коэф если больше минимального для нулей проходим дальше
                                 {
@@ -542,37 +556,41 @@ namespace Yandex.WorkerClass
                         {
                             var vs = _statDeviceNow[i] + _statCountryDeviceLast[j];
                             _sravneniedevice.Add(vs);
-                            if (vs.DohodClear > 0)
-                            {
-                                if (_statDeviceNow[i].CPMV > _deviceOptions.CPMV)
-                                {
-                                    Up.Add(_statDeviceNow[i].Name);
-                                    _statDeviceNow[i].Kof += _deviceOptions.KoefUp;
-                                }
-                            }
-                            if (vs.DohodClear < 0)
-                            {
-                                if (vs.Click > 0)
-                                {
-                                    Down.Add(_statDeviceNow[i].Name);
-                                    _statDeviceNow[i].Kof -= _deviceOptions.KoefDown;
-                                }
+                            //if (vs.DohodClear > 0)
+                            //{
+                            //    if (_statDeviceNow[i].CPMV > _deviceOptions.CPMV)
+                            //    {
+                            //        Up.Add(_statDeviceNow[i].Name);
+                            //        _statDeviceNow[i].Kof += _deviceOptions.KoefUp;
+                            //    }
+                            //}
+                            //if (vs.DohodClear < 0)
+                            //{
+                            //    if (_statDeviceNow[i].Kof > 2)
+                            //        if (vs.Click > 0)
+                            //        {
+                            //            {
+                            //                Down.Add(_statDeviceNow[i].Name);
 
-                            }
-                            if (vs.DohodClear == 0 && _zero)
-                            {
-                                if (this._statDeviceNow[i].Kof > _deviceOptions.Min) //проверяем коэф если больше минимального для нулей проходим дальше
-                                {
-                                    if (vs.Prosmotr <= _deviceOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
-                                    {
-                                        if ((this._statDeviceNow[i].Kof + _deviceOptions.KoefUp) < _deviceOptions.Max)// если коэф + коэф увеличения меньше максимального для нулей проходим дальше
-                                        {
-                                            this.Null.Add(vs.Name);//добавляем в нули 
-                                            this._statDeviceNow[i].Kof += _deviceOptions.KoefUp;
-                                        }
-                                    }
-                                }
-                            }
+                            //                _statDeviceNow[i].Kof -= _deviceOptions.KoefDown;
+                            //            }
+                            //        }
+
+                            //}
+                            //if (vs.DohodClear == 0 && _zero && _statDeviceNow[i].DohodClear >= 0)
+                            //{
+                            //    if (this._statDeviceNow[i].Kof > _deviceOptions.Min) //проверяем коэф если больше минимального для нулей проходим дальше
+                            //    {
+                            //        if (vs.Prosmotr <= _deviceOptions.Prosmotr)//проверяем показы если было меньше показов чем в настройках проходим дальше
+                            //        {
+                            //            if ((this._statDeviceNow[i].Kof + _deviceOptions.KoefUp) < _deviceOptions.Max)// если коэф + коэф увеличения меньше максимального для нулей проходим дальше
+                            //            {
+                            //                this.Null.Add(vs.Name);//добавляем в нули 
+                            //                this._statDeviceNow[i].Kof += _deviceOptions.KoefUp;
+                            //            }
+                            //        }
+                            //    }
+                            //}
                         }
                     }
                 }
@@ -590,16 +608,31 @@ namespace Yandex.WorkerClass
 
 
             string[] ss = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
+
             for (int h = 0; h < ss.Length; h++)
             {
 
-
+                ss[h] = _advertisingCompany.Where(p => p.Name == ss[h]).FirstOrDefault().Id.ToString();
                 s = await Api<string>.GetApiResponsString($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", _userOptions.TokenAdprofex);
                 //WorkClass.WriteLog(date, "Получение инфы об рк", s.Item2);
                 try
                 {
+                    Browser = s.Substring(s.IndexOf("\"browsers\""), s.IndexOf("\"devices\"") - s.IndexOf("\"browsers\""));
+                    try
+                    {
+                        int start = s.IndexOf("\"4\":");
+                        int end = s.IndexOf("}]",start);
+                        end += 2;
+                        end = end-start;
 
 
+                        Browser1 = s.Substring(start, end);
+                        
+                    }
+                    catch
+                    {
+
+                    }
                     int indexStart = s.IndexOf("\"filter\":{\"values\":");
                     int indexEnd = s.IndexOf("\",\"is_white_list");
                     string blak = s.Substring(indexStart + 20, indexEnd - indexStart - 20);
@@ -652,20 +685,30 @@ namespace Yandex.WorkerClass
         }
 
 
-
+        bool _CanReturnResults = false;
         public async Task Start()
         {
-            await GetInfoBD();
-            await GetStatNowAsync();
-            await GetStatAdprofexNow();
-            await GetInfo();
-            bool can = await GetStatLastAsync();
-            while (can != true)
+            Thread thread = new Thread(async () =>
+            {
+                await GetInfoBD();
+                await GetStatNowAsync();
+                await GetStatAdprofexNow();
+                await GetInfo();
+                bool can = await GetStatLastAsync();
+                while (can != true)
+                {
+                    await Task.Delay(1000);
+                }
+                await Sravnenie();
+                await ChangeKoefAsync();
+                _CanReturnResults = true;
+            });
+            thread.Start();
+            while (!_CanReturnResults)
             {
                 await Task.Delay(1000);
             }
-            await Sravnenie();
-            await ChangeKoefAsync();
+            await Task.Delay(5000);
         }
         async Task Save()
         {
@@ -685,7 +728,7 @@ namespace Yandex.WorkerClass
         async Task ChangeKoefAsync()
         {
             List<string> _Up = new();
-            
+
             for (int i = 0; i < Up.Count; i++)
             {
                 if (Up[i] == "Мобильный телефон")
@@ -699,7 +742,7 @@ namespace Yandex.WorkerClass
                     continue;
 
                 }
-                
+
                 string vs = ChangeCountry(Up[i]);
 
                 _Up.Add(vs);
@@ -707,12 +750,12 @@ namespace Yandex.WorkerClass
             List<string> _Down = new();
             for (int i = 0; i < Down.Count; i++)
             {
-                if (Up[i] == "Мобильный телефон")
+                if (Down[i] == "Мобильный телефон")
                 {
                     this.Micros1.Item2.campaign_micro_bidding._1[1].coeff -= (int)_deviceOptions.KoefDown;
                     continue;
                 }
-                else if (Up[i] == "Компьютер")
+                else if (Down[i] == "Компьютер")
                 {
                     this.Micros1.Item2.campaign_micro_bidding._1[0].coeff -= (int)_deviceOptions.KoefDown;
                     continue;
@@ -725,12 +768,12 @@ namespace Yandex.WorkerClass
             List<string> _Nuls = new();
             for (int i = 0; i < Null.Count; i++)
             {
-                if (Up[i] == "Мобильный телефон")
+                if (Null[i] == "Мобильный телефон")
                 {
                     this.Micros1.Item2.campaign_micro_bidding._1[1].coeff += (int)_deviceOptions.KoefUp;
                     continue;
                 }
-                else if (Up[i] == "Компьютер")
+                else if (Null[i] == "Компьютер")
                 {
                     this.Micros1.Item2.campaign_micro_bidding._1[0].coeff += (int)_deviceOptions.KoefUp;
                     continue;
@@ -824,13 +867,13 @@ namespace Yandex.WorkerClass
                 }
             }
             micro += "],\r\n\"1\":\r\n[{\"id\":" + "1" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[0].coeff + "}";
-
-            micro += ",{\"id\":" + "3" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[1].coeff + "}]}";
+            
+            micro += ",{\"id\":" + "3" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[1].coeff + "}" + $"],\n{Browser1.Trim(',')}" + "}";
 
             string group = "";
             switch (_countryOptions.Group)
             {
-                case "Все": group = "[2,3,1]"; break;
+                case "Всё": group = "[2,3,1]"; break;
                 case "Премиум": group = "[3]"; break;
                 case "Медиум": group = "[2]"; break;
                 case "Бомжи": group = "[1]"; break;
@@ -843,15 +886,16 @@ namespace Yandex.WorkerClass
             string[] ss = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
             for (int h = 0; h < ss.Length; h++)
             {
+                ss[h] = _advertisingCompany.Where(p => p.Name == ss[h]).FirstOrDefault().Id.ToString();
                 string micro1 = micro;
                 if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Push")
                 {
-                   
+
                     micro1 += $",\"active_site_groups\":{group},\"min_subscription_days\":0,\"max_subscription_days\":9999";
                 }
                 if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Vitrina")
                 {
-                  
+
                     micro1 += $",\"active_site_groups\":{group}";
                 }
                 if (_advertisingStreams.Proxy == "True")
@@ -862,9 +906,10 @@ namespace Yandex.WorkerClass
                 {
                     micro1 += ",\"exclude_proxy_ips\":false";
                 }
+                micro1 += "," + Browser.Trim(',');
                 micro1 += "}";
-
-                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
+                await Task.Delay(5000);
+                await Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
             }
 
         }
@@ -932,11 +977,12 @@ namespace Yandex.WorkerClass
             }
             micro += "],\r\n\"1\":\r\n[{\"id\":" + "1" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[0].coeff + "}";
 
-            micro += ",{\"id\":" + "3" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[1].coeff + "}]}";
+
+            micro += ",{\"id\":" + "3" + ",\"coeff\":" + this.Micros1.Item2.campaign_micro_bidding._1[1].coeff + "}" + $"],\n{Browser1.Trim(',')}" + "}";
             string group = "";
             switch (_countryOptions.Group)
             {
-                case "Все": group = "[2,3,1]"; break;
+                case "Всё": group = "[2,3,1]"; break;
                 case "Премиум": group = "[3]"; break;
                 case "Медиум": group = "[2]"; break;
                 case "Бомжи": group = "[1]"; break;
@@ -949,6 +995,7 @@ namespace Yandex.WorkerClass
             string[] ss = _advertisingStreams.AdCompanyId.Split(",", StringSplitOptions.RemoveEmptyEntries);
             for (int h = 0; h < ss.Length; h++)
             {
+                ss[h] = _advertisingCompany.Where(p => p.Name == ss[h]).FirstOrDefault().Id.ToString();
                 string micro1 = micro;
                 if (_advertisingCompany.Where(p => p.Id.ToString() == ss[h]).First().Type == "Push")
                 {
@@ -968,9 +1015,10 @@ namespace Yandex.WorkerClass
                 {
                     micro1 += ",\"exclude_proxy_ips\":false";
                 }
+                micro1 += "," + Browser.Trim(',');
                 micro1 += "}";
-
-                Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
+                await Task.Delay(5000);
+                await Api<bool>.PutApiRespons($"https://adv-api.adprofex.com/api/campaign/{ss[h]}", micro1, _userOptions.TokenAdprofex);
             }
 
 

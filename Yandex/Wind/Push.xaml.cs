@@ -23,7 +23,7 @@ namespace Yandex.Wind
         {
             InitializeComponent();
             tbText.Text = text;
-            tbTitle.Text = title;
+            this.Title= title;
             this.MouseLeftButtonDown += MainWindow_MouseLeftButtonDown;
         }
 
@@ -31,11 +31,16 @@ namespace Yandex.Wind
         {
             this.Close();
         }
-
+       async Task TimeToClose()
+        {
+            await Task.Delay(300000);
+            this.Close();
+        }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Task.Delay(300000).Wait();
-            this.Close();
+
+            TimeToClose();
+            
         }
         private void MainWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

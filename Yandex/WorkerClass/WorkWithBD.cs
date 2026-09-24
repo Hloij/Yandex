@@ -30,7 +30,7 @@ namespace Yandex.WorkerClass
                 wascon = false;
             }
         }
-        public static async Task Change(T obj)
+        public static async Task<bool> Change(T obj)
         {
             await Conect();
             Type type = obj.GetType();
@@ -50,11 +50,12 @@ namespace Yandex.WorkerClass
             }
             sqlExpression += $"WHERE `{properties[0].Name}` = '{properties[0].GetValue(obj)}';";
             SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-            await command.ExecuteNonQueryAsync();
+            int result =await command.ExecuteNonQueryAsync();
             command.Cancel();
             connection.Close();
+            return result == 1 ? true : false;
         }
-        public static async Task Del(T obj)
+        public static async Task<bool> Del(T obj)
         {
             await Conect();
             Type type = obj.GetType();
@@ -62,11 +63,12 @@ namespace Yandex.WorkerClass
             PropertyInfo[] properties = type.GetProperties();
             sqlExpression += $"WHERE `{properties[0].Name}` = '{properties[0].GetValue(obj)}';";
             SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-            await command.ExecuteNonQueryAsync();
+            int result = await command.ExecuteNonQueryAsync();
             command.Cancel();
             connection.Close();
+            return result == 1 ? true : false;
         }
-        public static async Task Add(T obj)
+        public static async Task <bool> Add(T obj)
         {
             await Conect();
             Type type = obj.GetType();
@@ -98,9 +100,10 @@ namespace Yandex.WorkerClass
 
             }
             SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-            await command.ExecuteNonQueryAsync();
+            int result = await command.ExecuteNonQueryAsync();
             command.Cancel();
             connection.Close();
+            return result == 1 ? true : false;
         }
         public static async Task<List<T>> Read(T obj) 
         {
